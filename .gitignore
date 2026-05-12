@@ -1,0 +1,34 @@
+# ---------- ENV / SECRETS ----------
+.env
+
+# ---------- PYTHON ----------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# ---------- VIRTUAL ENV ----------
+venv/
+env/
+.venv/
+
+# ---------- IDE ----------
+.vscode/
+.idea/
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+
+# ---------- LOGS ----------
+*.log
+
+# ---------- TEST / CACHE ----------
+.pytest_cache/
+.mypy_cache/
+
+# ---------- BUILD ----------
+dist/
+build/
+*.egg-info/
