@@ -76,3 +76,9 @@ class DeviceAlertCreate(BaseModel):
     timestamp: Optional[str] = None
     title: Optional[str] = None
     severity: Optional[str] = None
+
+
+class PushTokenRegister(BaseModel):
+    user_id: int
+    token: str
+    platform: str

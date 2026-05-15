@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from src.db import supabase
-from src.models import UserSignup, UserSignin
+from src.models import UserSignup, UserSignin, PushTokenRegister
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -71,3 +71,11 @@ def signin(user: UserSignin):
         "medical_condition": result["medical_condition"],
         "profile_photo_url": result["profile_photo_url"]
     }
+
+@router.post("/push-token")  # becomes /auth/push-token because of prefix
+def register_push_token(data: PushTokenRegister):
+    supabase.table("push_tokens").upsert(
+        data.model_dump(),
+        on_conflict="token"
+    ).execute()
+    return {"status": "token registered"}
