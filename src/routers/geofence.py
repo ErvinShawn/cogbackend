@@ -12,12 +12,23 @@ class GeofenceSchema(BaseModel):
 @router.post("/set")
 def set_geofence(data: GeofenceSchema):
     try:
+        # look up user_id from devices table
+        device_response = (
+            supabase.table("devices")
+            .select("user_id")
+            .eq("device_id", data.device_id)
+            .limit(1)
+            .execute()
+        )
+        user_id = device_response.data[0]["user_id"] if device_response.data else None
+
         supabase.table("geofences").upsert(
             {
                 "device_id": data.device_id,
                 "latitude": data.latitude,
                 "longitude": data.longitude,
                 "radius_meters": data.radius_meters,
+                "user_id": user_id,  # added
             },
             on_conflict="device_id",
         ).execute()
