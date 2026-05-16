@@ -1,14 +1,20 @@
 from fastapi import APIRouter, HTTPException
 from src.db import supabase
 from pydantic import BaseModel
+from typing import List, Optional
 
 router = APIRouter(prefix="/faces", tags=["Faces"])
 
 class FaceCreate(BaseModel):
     person_name: str
     relationship: str
-    image_url: str
-    user_id: int          
+    image_urls: List[str]   # changed from image_url
+    user_id: int
+
+class FaceUpdate(BaseModel):
+    person_name: Optional[str] = None
+    relationship: Optional[str] = None
+    image_urls: Optional[List[str]] = None
 
 @router.post("")
 def create_face(data: FaceCreate):
@@ -20,7 +26,7 @@ def create_face(data: FaceCreate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/user/{user_id}")   # scoped to user, not global
+@router.get("/user/{user_id}")
 def get_faces(user_id: int):
     response = (
         supabase.table("faces")
@@ -30,6 +36,16 @@ def get_faces(user_id: int):
         .execute()
     )
     return response.data or []
+
+@router.patch("/{face_id}")
+def update_face(face_id: int, data: FaceUpdate):
+    update_data = data.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No updates provided")
+    response = supabase.table("faces").update(update_data).eq("id", face_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Face not found")
+    return {"message": "face updated"}
 
 @router.delete("/{face_id}")
 def delete_face(face_id: int):
