@@ -11,6 +11,7 @@ router = APIRouter(prefix="/faces", tags=["Faces"])
 class FaceCreate(BaseModel):
     person_name: str
     relationship: str
+    
     image_urls: List[str]   # changed from image_url
     user_id: int
 

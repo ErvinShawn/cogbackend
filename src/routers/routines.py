@@ -10,6 +10,7 @@ class ReminderSchema(BaseModel):
     description: Optional[str] = None
     time: str
 
+
 class RoutineUpdate(BaseModel):
     device_id: str
     user_id: int

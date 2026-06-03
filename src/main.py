@@ -20,6 +20,7 @@ def test_db_connection():
         supabase.table("users").select("id").limit(1).execute()
         print("DATABASE CONNECTED SUCCESSFULLY")
 
+
     except Exception as e:
         print("DATABASE CONNECTION FAILED")
         print(e)
