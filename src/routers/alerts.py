@@ -10,7 +10,7 @@ router = APIRouter(tags=["Alerts"])
 ALERT_METADATA = {
     "geofence_breach":   {"title": "Patient exited home boundary", "severity": "Critical"},
     "fall_risk":         {"title": "Fall risk movement detected",  "severity": "Critical"},
-    "missed_medication": {"title": "Missed medication reminder",   "severity": "Moderate"},
+    #"missed_medication": {"title": "Missed medication reminder",   "severity": "Moderate"},
     "device_offline":    {"title": "Device connection lost",       "severity": "Moderate"},
 }
 

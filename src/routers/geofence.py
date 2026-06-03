@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from src.db import supabase
 from pydantic import BaseModel
+from src.routers.events import push_event
+import asyncio
 
 router = APIRouter(prefix="/geofence", tags=["Geofence"])
 
@@ -32,6 +34,11 @@ def set_geofence(data: GeofenceSchema):
             },
             on_conflict="device_id",
         ).execute()
+        asyncio.create_task(push_event(data.device_id, "geofence_updated", {
+            "latitude": data.latitude,
+            "longitude": data.longitude,
+            "radius_meters": data.radius_meters,
+        }))
         return {"status": "success", "message": "Geofence synchronized"}
     except Exception as e:
         print(f"Database Error: {e}")

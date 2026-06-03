@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.routers import faces, routines, geofence, auth, devices, alerts
+from src.routers import faces, routines, geofence, auth, devices, alerts, events
 from src.db import supabase
 
 
@@ -30,3 +30,4 @@ app.include_router(geofence.router)
 app.include_router(auth.router)
 app.include_router(devices.router)
 app.include_router(alerts.router)
+app.include_router(events.router)

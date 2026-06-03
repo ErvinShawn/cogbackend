@@ -1,8 +1,12 @@
+import asyncio
+
 from fastapi import APIRouter, HTTPException
+from torch import device
+from routers.events import push_event
 from src.db import supabase
 from pydantic import BaseModel
 from typing import List, Optional
-
+from src.routers.events import push_event
 router = APIRouter(prefix="/faces", tags=["Faces"])
 
 class FaceCreate(BaseModel):
@@ -22,6 +26,9 @@ def create_face(data: FaceCreate):
         response = supabase.table("faces").insert(data.model_dump()).execute()
         if not response.data:
             raise HTTPException(status_code=500, detail="Failed to save face")
+        device = supabase.table("devices").select("device_id").eq("user_id", data.user_id).execute()
+        for d in (device.data or []):
+            asyncio.create_task(push_event(d["device_id"], "faces_updated"))
         return {"message": "face saved", "id": response.data[0].get("id")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -45,6 +52,9 @@ def update_face(face_id: int, data: FaceUpdate):
     response = supabase.table("faces").update(update_data).eq("id", face_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Face not found")
+    device = supabase.table("devices").select("device_id").eq("user_id", data.user_id).execute()
+    for d in (device.data or []):
+        asyncio.create_task(push_event(d["device_id"], "faces_updated"))
     return {"message": "face updated"}
 
 @router.delete("/{face_id}")
@@ -52,4 +62,7 @@ def delete_face(face_id: int):
     response = supabase.table("faces").delete().eq("id", face_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Face not found")
+    device = supabase.table("devices").select("device_id").eq("user_id", data.user_id).execute()
+    for d in (device.data or []):
+        asyncio.create_task(push_event(d["device_id"], "faces_updated"))
     return {"message": "face deleted"}

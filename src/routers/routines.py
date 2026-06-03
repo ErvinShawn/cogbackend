@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException
 from src.db import supabase
 from pydantic import BaseModel
 from typing import Optional
-
+from src.routers.events import push_event
+import asyncio
 
 class ReminderSchema(BaseModel):
     title: str
@@ -42,6 +43,7 @@ def save_reminder(data: RoutineUpdate):
             {"device_id": data.device_id, "user_id": data.user_id, "reminders": reminders},
             on_conflict="user_id",
         ).execute()
+        asyncio.create_task(push_event(data.device_id, "routines_updated"))
         return {"status": "success"}
     except Exception as e:
         print(f"Error saving routine: {e}")
@@ -68,6 +70,7 @@ def update_reminder(user_id: int, index: int, reminder: ReminderSchema):
     reminders[index] = {"title": reminder.title, "description": reminder.description, "time": reminder.time}
     
     supabase.table("routines").update({"reminders": reminders}).eq("user_id", user_id).execute()
+    asyncio.create_task(push_event(data.device_id, "routines_updated"))
     return {"status": "updated"}
 
 @router.delete("/user/{user_id}/reminder/{index}")
@@ -82,4 +85,5 @@ def delete_reminder(user_id: int, index: int):
     
     reminders.pop(index)
     supabase.table("routines").update({"reminders": reminders}).eq("user_id", user_id).execute()
+    asyncio.create_task(push_event(data.device_id, "routines_updated"))
     return {"status": "deleted"}
