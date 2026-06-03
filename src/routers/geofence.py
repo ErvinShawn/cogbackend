@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException
 from src.db import supabase
 from pydantic import BaseModel
 from src.routers.events import push_event
-import asyncio
 
 router = APIRouter(prefix="/geofence", tags=["Geofence"])
 
@@ -11,10 +10,10 @@ class GeofenceSchema(BaseModel):
     latitude: float
     longitude: float
     radius_meters: float
+
 @router.post("/set")
 def set_geofence(data: GeofenceSchema):
     try:
-        # look up user_id from devices table
         device_response = (
             supabase.table("devices")
             .select("user_id")
@@ -23,22 +22,21 @@ def set_geofence(data: GeofenceSchema):
             .execute()
         )
         user_id = device_response.data[0]["user_id"] if device_response.data else None
-
         supabase.table("geofences").upsert(
             {
                 "device_id": data.device_id,
                 "latitude": data.latitude,
                 "longitude": data.longitude,
                 "radius_meters": data.radius_meters,
-                "user_id": user_id,  # added
+                "user_id": user_id,
             },
             on_conflict="device_id",
         ).execute()
-        asyncio.create_task(push_event(data.device_id, "geofence_updated", {
+        push_event(data.device_id, "geofence_updated", {
             "latitude": data.latitude,
             "longitude": data.longitude,
             "radius_meters": data.radius_meters,
-        }))
+        })
         return {"status": "success", "message": "Geofence synchronized"}
     except Exception as e:
         print(f"Database Error: {e}")
@@ -54,8 +52,6 @@ def get_geofence(device_id: str):
         .execute()
     )
     result = response.data[0] if response.data else None
-
     if not result:
         return {"latitude": None, "longitude": None, "radius_meters": None}
-
     return result
