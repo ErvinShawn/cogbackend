@@ -1,7 +1,6 @@
 import asyncio
 
 from fastapi import APIRouter, HTTPException
-from torch import device
 from routers.events import push_event
 from src.db import supabase
 from pydantic import BaseModel
