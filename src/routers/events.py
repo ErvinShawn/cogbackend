@@ -19,7 +19,9 @@ def _get_or_create_queues(device_id: str) -> list:
 
 
 def push_event(device_id: str, event: str, data: dict = None):
-
+    logger.info(
+        f"[SSE TEST] device={device_id} event={event}"
+    )
     if data is None:
         data = {}
 
