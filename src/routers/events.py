@@ -18,15 +18,30 @@ def _get_or_create_queues(device_id: str) -> list:
     return _device_queues[device_id]
 
 
-async def push_event(device_id: str, event: str, data: dict = {}):
-    """Call this from other routers to push an event to a connected Pi."""
+def push_event(device_id: str, event: str, data: dict = None):
+
+    if data is None:
+        data = {}
+
     queues = _device_queues.get(device_id, [])
+
     if not queues:
-        logger.info(f"[SSE] No active listeners for device {device_id}")
+        logger.info(
+            f"[SSE] No active listeners for device {device_id}"
+        )
         return
-    message = json.dumps({"event": event, "data": data})
+
+    message = json.dumps({
+        "event": event,
+        "data": data
+    })
+
     for q in queues:
-        await q.put(message)
+        q.put_nowait(message)
+
+    logger.info(
+        f"[SSE] Sent {event} to {device_id}"
+    )
 
 
 @router.get("/events/{device_id}")
