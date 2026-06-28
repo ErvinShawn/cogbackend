@@ -17,19 +17,32 @@ def _get_or_create_queues(device_id: str) -> list:
     return _device_queues[device_id]
 
 
-def push_event(device_id: str, event: str, data: dict = {}):
-    """Sync-safe — can be called from regular def routes."""
+def push_event(device_id: str, event: str, data: dict = None):
+    logger.info(
+        f"[SSE TEST] device={device_id} event={event}"
+    )
+    if data is None:
+        data = {}
+
     queues = _device_queues.get(device_id, [])
+
     if not queues:
-        logger.info(f"[SSE] No active listeners for {device_id}")
+        logger.info(
+            f"[SSE] No active listeners for device {device_id}"
+        )
         return
-    message = json.dumps({"event": event, "data": data})
+
+    message = json.dumps({
+        "event": event,
+        "data": data
+    })
+
     for q in queues:
-        try:
-            loop = asyncio.get_event_loop()
-            loop.call_soon_threadsafe(q.put_nowait, message)
-        except Exception as e:
-            logger.warning(f"[SSE] push failed: {e}")
+        q.put_nowait(message)
+
+    logger.info(
+        f"[SSE] Sent {event} to {device_id}"
+    )
 
 
 @router.get("/events/{device_id}")
