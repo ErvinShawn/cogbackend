@@ -52,3 +52,43 @@ def update_device(device_id: str, updates: DeviceUpdate):
     supabase.table("devices").update(update_data).eq("device_id", device_id).execute()
 
     return {"message": "Live status updated", "fields": list(update_data.keys())}
+
+
+
+@router.get("/available")
+def get_available_devices():
+    response = (
+        supabase.table("devices")
+        .select("device_id, status, last_seen")
+        .is_("user_id", "null")
+        .execute()
+    )
+    return response.data or []
+
+@router.post("/link")
+def link_device(payload: dict):
+    device_id = payload.get("device_id")
+    user_id = payload.get("user_id")
+
+    existing = supabase.table("devices").select("user_id").eq("device_id", device_id).limit(1).execute()
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Device not found")
+    if existing.data[0].get("user_id"):
+        raise HTTPException(status_code=400, detail="Device already linked")
+
+    supabase.table("devices").update({"user_id": user_id}).eq("device_id", device_id).execute()
+    return {"status": "linked"}
+
+@router.post("/unlink")
+def unlink_device(payload: dict):
+    device_id = payload.get("device_id")
+    user_id = payload.get("user_id")
+
+    existing = supabase.table("devices").select("user_id").eq("device_id", device_id).limit(1).execute()
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Device not found")
+    if existing.data[0].get("user_id") != user_id:
+        raise HTTPException(status_code=403, detail="Device not linked to this account")
+
+    supabase.table("devices").update({"user_id": None}).eq("device_id", device_id).execute()
+    return {"status": "unlinked"}
