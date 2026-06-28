@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
 from src.db import supabase
+from pydantic import BaseModel
 from src.models import DeviceCreate, DeviceUpdate
 
 router = APIRouter(
