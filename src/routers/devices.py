@@ -92,3 +92,22 @@ def unlink_device(payload: dict):
 
     supabase.table("devices").update({"user_id": None}).eq("device_id", device_id).execute()
     return {"status": "unlinked"}
+
+class DeviceRegister(BaseModel):
+    device_id: str
+
+@router.post("/register")
+def register_device(device: DeviceRegister):
+    existing = supabase.table("devices").select("device_id", "user_id").eq("device_id", device.device_id).limit(1).execute()
+    if existing.data:
+        supabase.table("devices").update({
+            "status": "online",
+            "last_seen": datetime.now(timezone.utc).isoformat()
+        }).eq("device_id", device.device_id).execute()
+        return {"status": "online", "linked": existing.data[0].get("user_id") is not None}
+
+    supabase.table("devices").insert({
+        "device_id": device.device_id,
+        "status": "online",
+    }).execute()
+    return {"status": "registered", "linked": False}
