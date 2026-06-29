@@ -20,41 +20,6 @@ def create_device(device: DeviceCreate):
     except Exception:
         raise HTTPException(status_code=400, detail="Device ID already exists or invalid user_id.")
 
-# ---------------- READ (Single) ----------------
-@router.get("/{device_id}")
-def get_device(device_id: str):
-    response = supabase.table("devices").select("*").eq("device_id", device_id).limit(1).execute()
-    result = response.data[0] if response.data else None
-
-    if not result:
-        raise HTTPException(status_code=404, detail="Device not found")
-
-    return result
-
-# ---------------- READ (User's Devices) ----------------
-@router.get("/user/{user_id}")
-def get_user_devices(user_id: int):
-    response = supabase.table("devices").select("*").eq("user_id", user_id).execute()
-    return response.data or []
-
-# ---------------- UPDATE (Heartbeat/Settings) ----------------
-@router.patch("/{device_id}")
-def update_device(device_id: str, updates: DeviceUpdate):
-    update_data = updates.model_dump(exclude_unset=True)
-    
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No updates provided")
-
-    exists_response = supabase.table("devices").select("device_id").eq("device_id", device_id).limit(1).execute()
-    if not exists_response.data:
-        raise HTTPException(status_code=404, detail="Device not found")
-
-    update_data["last_seen"] = datetime.now(timezone.utc).isoformat()
-    supabase.table("devices").update(update_data).eq("device_id", device_id).execute()
-
-    return {"message": "Live status updated", "fields": list(update_data.keys())}
-
-
 
 @router.get("/available")
 def get_available_devices():
@@ -112,3 +77,40 @@ def register_device(device: DeviceRegister):
         "status": "online",
     }).execute()
     return {"status": "registered", "linked": False}
+    
+# ---------------- READ (User's Devices) ----------------
+@router.get("/user/{user_id}")
+def get_user_devices(user_id: int):
+    response = supabase.table("devices").select("*").eq("user_id", user_id).execute()
+    return response.data or []
+
+
+# ---------------- READ (Single) ----------------
+@router.get("/{device_id}")
+def get_device(device_id: str):
+    response = supabase.table("devices").select("*").eq("device_id", device_id).limit(1).execute()
+    result = response.data[0] if response.data else None
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    return result
+
+# ---------------- UPDATE (Heartbeat/Settings) ----------------
+@router.patch("/{device_id}")
+def update_device(device_id: str, updates: DeviceUpdate):
+    update_data = updates.model_dump(exclude_unset=True)
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No updates provided")
+
+    exists_response = supabase.table("devices").select("device_id").eq("device_id", device_id).limit(1).execute()
+    if not exists_response.data:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    update_data["last_seen"] = datetime.now(timezone.utc).isoformat()
+    supabase.table("devices").update(update_data).eq("device_id", device_id).execute()
+
+    return {"message": "Live status updated", "fields": list(update_data.keys())}
+
+
