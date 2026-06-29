@@ -9,12 +9,17 @@ def signup(user: UserSignup):
     try:
         payload = user.model_dump()
         payload["email"] = payload["email"].strip().lower()
+
+        # Check duplicate before insert
+        existing = supabase.table("users").select("id").eq("email", payload["email"]).limit(1).execute()
+        if existing.data:
+            raise HTTPException(status_code=409, detail="An account with this email already exists.")
+
         response = supabase.table("users").insert(payload).execute()
         if not response.data:
             raise HTTPException(status_code=500, detail="Failed to create user")
 
         new_user = response.data[0]
-
         return {
             "message": "user created",
             "user_id": new_user.get("id"),
@@ -22,10 +27,11 @@ def signup(user: UserSignup):
             "medical_condition": new_user.get("medical_condition"),
             "profile_photo_url": new_user.get("profile_photo_url")
         }
-
+    except HTTPException:
+        raise  # don't swallow HTTPExceptions
     except Exception as e:
-        return {"error": str(e)}
-    
+        raise HTTPException(status_code=400, detail="An account with this email already exists.")
+        
 #signin
 @router.post("/signin")
 def signin(user: UserSignin):
