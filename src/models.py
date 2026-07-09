@@ -66,6 +66,10 @@ class DeviceUpdate(BaseModel):
     longitude: Optional[float] = None
     face_detection: Optional[bool] = None
     object_detection: Optional[bool] = None
+    quiet_hours: Optional[bool] = None
+    quiet_start: Optional[str] = None
+    quiet_end: Optional[str] = None
+    voice_prompts: Optional[bool] = None
 
 
 # ---------- ALERTS ----------
