@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from src.db import supabase
 from pydantic import BaseModel
 from src.models import DeviceCreate, DeviceUpdate
-
+from src.routers.events import push_event
 router = APIRouter(
     prefix="/devices",
     tags=["Devices"]
@@ -111,6 +111,7 @@ def update_device(device_id: str, updates: DeviceUpdate):
     update_data["last_seen"] = datetime.now(timezone.utc).isoformat()
     supabase.table("devices").update(update_data).eq("device_id", device_id).execute()
 
-    return {"message": "Live status updated", "fields": list(update_data.keys())}
+    push_event(device_id, "settings_updated", update_data)
 
+    return {"message": "Live status updated", "fields": list(update_data.keys())}
 
