@@ -79,10 +79,57 @@ def register_device(device: DeviceRegister):
     return {"status": "registered", "linked": False}
     
 # ---------------- READ (User's Devices) ----------------
+from datetime import datetime, timezone
+
 @router.get("/user/{user_id}")
 def get_user_devices(user_id: int):
-    response = supabase.table("devices").select("*").eq("user_id", user_id).execute()
-    return response.data or []
+    response = (
+        supabase.table("devices")
+        .select("*")
+        .eq("user_id", user_id)
+        .execute()
+    )
+
+    devices = response.data or []
+
+    now = datetime.now(timezone.utc)
+
+    for device in devices:
+        last_seen = device.get("last_seen")
+
+        if last_seen:
+            try:
+                last = datetime.fromisoformat(last_seen)
+
+                if last.tzinfo is None:
+                    last = last.replace(tzinfo=timezone.utc)
+                print(last_seen)
+                print(last)
+                print(last.tzinfo)
+                print(now.tzinfo)
+                print(now)
+                print((now - last).total_seconds())
+                if (now - last).total_seconds() > 10:  # Testing timeout
+                    if device.get("status") != "offline":
+                        supabase.table("devices").update(
+                            {"status": "offline"}
+                        ).eq(
+                            "device_id", device["device_id"]
+                        ).execute()
+
+                        device["status"] = "offline"
+
+                else:
+                    if device.get("status") != "online":
+                        supabase.table("devices").update(
+                            {"status": "online"}
+                        ).eq("device_id", device["device_id"]).execute()
+
+                        device["status"] = "online"
+            except Exception as e:
+                print(e)
+
+    return devices
 
 
 # ---------------- READ (Single) ----------------
